@@ -1,0 +1,26 @@
+name: Auto Tag - Date Based
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  datever:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Create tag from date and count
+        id: create_tag
+        run: |
+          DATE=$(date +"%Y.%m.%d")
+          BUILD=$(git rev-list --count HEAD)
+          TAG="v$DATE.$BUILD"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Push tag
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git tag ${{ steps.create_tag.outputs.tag }}
+          git push origin ${{ steps.create_tag.outputs.tag }}
