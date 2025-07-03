@@ -2,13 +2,15 @@ name: Auto Tag - Date Based
 
 on:
   push:
-    branches: develop
+    branches:
+      - develop
 
 jobs:
   datever:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
       - name: Create tag from date and count
         id: create_tag
@@ -18,9 +20,14 @@ jobs:
           TAG="v$DATE.$BUILD"
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
-      - name: Push tag
+      - name: Configure Git
         run: |
           git config user.name "shivam962122"
           git config user.email "shivam962122@gmail.com"
+
+      - name: Push Tag using PAT
+        env:
+          PAT: ${{ secrets.GH_PAT }}
+        run: |
           git tag ${{ steps.create_tag.outputs.tag }}
-          git push origin ${{ steps.create_tag.outputs.tag }}
+          git push https://x-access-token:${PAT}@github.com/${{ github.repository }} --tags
