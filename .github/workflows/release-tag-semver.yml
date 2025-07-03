@@ -14,7 +14,7 @@ jobs:
         id: get_tag
         run: |
           git fetch --tags
-          tag=$(git tag --sort=-creatordate | head -n1 || echo "v0.0.0")
+          tag=$(git tag --sort=-creatordate | head -n1 || echo "0.0.0")
           echo "tag=$tag" >> $GITHUB_OUTPUT
 
       - name: Bump patch version
@@ -29,7 +29,7 @@ jobs:
 
       - name: Push new tag
         run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
+          git config user.name "shivam962122"
+          git config user.email "shivam962122@gmail.com"
           git tag ${{ steps.bump.outputs.new_tag }}
           git push origin ${{ steps.bump.outputs.new_tag }}

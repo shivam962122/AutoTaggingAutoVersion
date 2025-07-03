@@ -20,7 +20,7 @@ jobs:
 
       - name: Push tag
         run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
+          git config user.name "shivam962122"
+          git config user.email "shivam962122@gmail.com"
           git tag ${{ steps.create_tag.outputs.tag }}
           git push origin ${{ steps.create_tag.outputs.tag }}
