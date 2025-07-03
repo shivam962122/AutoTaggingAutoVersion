@@ -2,7 +2,8 @@ name: Auto Tag - Semantic Patch Versioning
 
 on:
   push:
-    branches: develop
+    branches:
+      - develop
 
 jobs:
   semver:
@@ -14,22 +15,27 @@ jobs:
         id: get_tag
         run: |
           git fetch --tags
-          tag=$(git tag --sort=-creatordate | head -n1 || echo "0.0.0")
+          tag=$(git tag --sort=-creatordate | head -n1)
+          if [ -z "$tag" ]; then tag="v0.0.0"; fi
+          echo "tag=$tag"
           echo "tag=$tag" >> $GITHUB_OUTPUT
 
       - name: Bump patch version
         id: bump
         run: |
-          version=${{ steps.get_tag.outputs.tag }}
-          version=${version#v}
+          version="${{ steps.get_tag.outputs.tag }}"
+          version="${version#v}"
           IFS='.' read -r major minor patch <<< "$version"
           patch=$((patch+1))
           new_tag="v$major.$minor.$patch"
+          echo "new_tag=$new_tag"
           echo "new_tag=$new_tag" >> $GITHUB_OUTPUT
 
-      - name: Push new tag
+      - name: Push new tag using PAT
+        env:
+          PAT: ${{ secrets.GH_PAT }}
         run: |
-          git config user.name "shivam962122"
-          git config user.email "shivam962122@gmail.com"
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
           git tag ${{ steps.bump.outputs.new_tag }}
-          git push origin ${{ steps.bump.outputs.new_tag }}
+          git push https://x-access-token:${PAT}@github.com/${{ github.repository }} --tags
