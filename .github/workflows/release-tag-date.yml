@@ -2,7 +2,7 @@ name: Auto Tag - Date Based
 
 on:
   push:
-    branches: [main]
+    branches: develop
 
 jobs:
   datever:
