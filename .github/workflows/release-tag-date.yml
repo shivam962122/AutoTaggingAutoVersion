@@ -1,26 +1,43 @@
-name: Auto Tag - Date Based
+name: Auto Tag - Date Based Increment
 
 on:
   push:
-    branches: develop
+    branches:
+      - develop
 
 jobs:
   datever:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-      - name: Create tag from date and count
+      - name: Generate date-based tag with increment
         id: create_tag
         run: |
           DATE=$(date +"%Y.%m.%d")
-          BUILD=$(git rev-list --count HEAD)
-          TAG="v$DATE.$BUILD"
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          i=1
+          while true; do
+            TAG="v${DATE}.${i}"
+            if git ls-remote --tags origin | grep -q "refs/tags/${TAG}"; then
+              echo "Tag ${TAG} already exists. Trying next..."
+              i=$((i+1))
+            else
+              echo "Using tag: ${TAG}"
+              echo "tag=${TAG}" >> $GITHUB_OUTPUT
+              break
+            fi
+          done
 
-      - name: Push tag
+      - name: Configure Git Identity
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git tag ${{ steps.create_tag.outputs.tag }}
-          git push origin ${{ steps.create_tag.outputs.tag }}
+
+      - name: Create and Push Tag
+        env:
+          PAT: ${{ secrets.GH_PAT }}
+        run: |
+          TAG=${{ steps.create_tag.outputs.tag }}
+          git tag "$TAG"
+          git push https://x-access-token:${PAT}@github.com/${{ github.repository }} "$TAG"
