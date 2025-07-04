@@ -8,7 +8,7 @@ namespace AutoTaggingAutoVersion.Controllers
     {
         private static readonly string[] Summaries = new[]
         {
-            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+            "Testing1", "Testing2", "Testing3", "Testing4", "Testing5", "Testing6", "Testing7", "Hot", "Sweltering", "Scorching"
         };
 
         private readonly ILogger<WeatherForecastController> _logger;
