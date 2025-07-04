@@ -18,16 +18,17 @@ jobs:
           DATE=$(date +"%Y.%m.%d")
           BUILD=$(git rev-list --count HEAD)
           TAG="v$DATE.$BUILD"
+          echo "tag=$TAG"
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
-      - name: Configure Git
+      - name: Configure Git Identity
         run: |
-          git config user.name "shivam962122"
-          git config user.email "shivam962122@gmail.com"
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
 
       - name: Push Tag using PAT
         env:
           PAT: ${{ secrets.GH_PAT }}
         run: |
           git tag ${{ steps.create_tag.outputs.tag }}
-          git push https://x-access-token:${PAT}@github.com/${{ github.repository }} --tags
+          git push https://x-access-token:${PAT}@github.com/${{ github.repository }} ${{ steps.create_tag.outputs.tag }}
