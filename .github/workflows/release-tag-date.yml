@@ -12,14 +12,25 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Create tag from date and count
+      - name: Create tag from date and count (skip if exists)
         id: create_tag
         run: |
           DATE=$(date +"%Y.%m.%d")
           BUILD=$(git rev-list --count HEAD)
           TAG="v$DATE.$BUILD"
-          echo "tag=$TAG"
+
+          echo "Generated tag: $TAG"
           echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+          # Check if tag already exists
+          if git ls-remote --tags origin | grep -q "refs/tags/$TAG"; then
+            echo "Tag $TAG already exists on remote. Skipping creation."
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "Creating tag $TAG locally."
+            git tag "$TAG"
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Configure Git Identity
         run: |
@@ -27,8 +38,9 @@ jobs:
           git config user.email "actions@github.com"
 
       - name: Push Tag using PAT
+        if: steps.create_tag.outputs.skip == 'false'
         env:
           PAT: ${{ secrets.GH_PAT }}
         run: |
-          git tag ${{ steps.create_tag.outputs.tag }}
+          echo "Pushing tag ${{ steps.create_tag.outputs.tag }} to GitHub..."
           git push https://x-access-token:${PAT}@github.com/${{ github.repository }} ${{ steps.create_tag.outputs.tag }}
