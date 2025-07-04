@@ -1,4 +1,4 @@
-name: Auto Tag - Date Based
+name: Auto Tag - Date Based Increment
 
 on:
   push:
@@ -12,35 +12,32 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Create tag from date and count (skip if exists)
+      - name: Generate date-based tag with increment
         id: create_tag
         run: |
           DATE=$(date +"%Y.%m.%d")
-          BUILD=$(git rev-list --count HEAD)
-          TAG="v$DATE.$BUILD"
-
-          echo "Generated tag: $TAG"
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-
-          # Check if tag already exists
-          if git ls-remote --tags origin | grep -q "refs/tags/$TAG"; then
-            echo "Tag $TAG already exists on remote. Skipping creation."
-            echo "skip=true" >> $GITHUB_OUTPUT
-          else
-            echo "Creating tag $TAG locally."
-            git tag "$TAG"
-            echo "skip=false" >> $GITHUB_OUTPUT
-          fi
+          i=1
+          while true; do
+            TAG="v${DATE}.${i}"
+            if git ls-remote --tags origin | grep -q "refs/tags/${TAG}"; then
+              echo "Tag ${TAG} already exists. Trying next..."
+              i=$((i+1))
+            else
+              echo "Using tag: ${TAG}"
+              echo "tag=${TAG}" >> $GITHUB_OUTPUT
+              break
+            fi
+          done
 
       - name: Configure Git Identity
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
 
-      - name: Push Tag using PAT
-        if: steps.create_tag.outputs.skip == 'false'
+      - name: Create and Push Tag
         env:
           PAT: ${{ secrets.GH_PAT }}
         run: |
-          echo "Pushing tag ${{ steps.create_tag.outputs.tag }} to GitHub..."
-          git push https://x-access-token:${PAT}@github.com/${{ github.repository }} ${{ steps.create_tag.outputs.tag }}
+          TAG=${{ steps.create_tag.outputs.tag }}
+          git tag "$TAG"
+          git push https://x-access-token:${PAT}@github.com/${{ github.repository }} "$TAG"
